@@ -29,8 +29,7 @@ extern "C" {
  * @brief This file contains the NFC API.
  */
 
-#define NFC_ERROR_CLASS TIZEN_ERROR_NETWORK_CLASS | 0x200
-
+#define NFC_ERROR_CLASS TIZEN_ERROR_NFC
 
 /**
  * @brief Error codes reported by the NFC API.
@@ -47,14 +46,18 @@ typedef enum {
 	NFC_ERROR_DEVICE_BUSY = TIZEN_ERROR_RESOURCE_BUSY,	/**< Previous operation is not finished still busy */
 	NFC_ERROR_NO_DEVICE = NFC_ERROR_CLASS | 0x04, /**< no device */
 	NFC_ERROR_NOT_ACTIVATED = NFC_ERROR_CLASS | 0x05, /**< NFC is not activated */
-	NFC_ERROR_NOT_SUPPORTED = NFC_ERROR_CLASS | 0x06, /**< Not supported */
-	NFC_ERROR_ALREADY_ACTIVATED = NFC_ERROR_CLASS | 0x07, /**< Already activated */
-	NFC_ERROR_ALREADY_DEACTIVATED = NFC_ERROR_CLASS | 0x08, /**< Already deactivated */
-	NFC_ERROR_READ_ONLY_NDEF = NFC_ERROR_CLASS | 0x09, /**< Read only tag */
-	NFC_ERROR_NO_SPACE_ON_NDEF = NFC_ERROR_CLASS | 0x0a, /**< No enough space on tag */
-	NFC_ERROR_NO_NDEF_MESSAGE = NFC_ERROR_CLASS | 0x0b, /**< No NDEF Message on Tag */
-	NFC_ERROR_NOT_NDEF_FORMAT = NFC_ERROR_CLASS | 0x0c, /**< Not NDEF format Tag */
-	NFC_ERROR_SECURITY_RESTRICTED = NFC_ERROR_CLASS | 0x0d /**<  Restricted by security system policy */
+	NFC_ERROR_NOT_SUPPORTED = TIZEN_ERROR_NOT_SUPPORTED, /**< Not supported */
+	NFC_ERROR_ALREADY_ACTIVATED = NFC_ERROR_CLASS | 0x06, /**< Already activated */
+	NFC_ERROR_ALREADY_DEACTIVATED = NFC_ERROR_CLASS | 0x07, /**< Already deactivated */
+	NFC_ERROR_READ_ONLY_NDEF = NFC_ERROR_CLASS | 0x08, /**< Read only tag */
+	NFC_ERROR_NO_SPACE_ON_NDEF = NFC_ERROR_CLASS | 0x09, /**< No enough space on tag */
+	NFC_ERROR_NO_NDEF_MESSAGE = NFC_ERROR_CLASS | 0x0a, /**< No NDEF Message on Tag */
+	NFC_ERROR_NOT_NDEF_FORMAT = NFC_ERROR_CLASS | 0x0b, /**< Not NDEF format Tag */
+	NFC_ERROR_SECURITY_RESTRICTED = NFC_ERROR_CLASS | 0x0c, /**<  Restricted by access control */
+	NFC_ERROR_PERMISSION_DENIED = TIZEN_ERROR_PERMISSION_DENIED, /**< Restricted by Smack */
+	NFC_ERROR_ILLEGAL_STATE = NFC_ERROR_CLASS | 0x0d, /**<  The state is wrong */
+	NFC_ERROR_NOT_INITIALIZED = NFC_ERROR_CLASS | 0x0e, /**< NFC is not initialized */
+	NFC_ERROR_TAG_NOT_SUPPORTED = NFC_ERROR_CLASS | 0x0f /**< Tag is not supported */
 } nfc_error_e;
 
 /**
@@ -92,9 +95,9 @@ typedef enum {
 	NFC_ISO14443_A_PICC,	/**< ISO14443_A PICC */
 	NFC_ISO14443_4A_PICC,	/**< ISO14443_4A PICC */
 	NFC_ISO14443_3A_PICC,	/**< ISO14443_3A PICC */
-	NFC_MIFARE_MINI_PICC, 	/**< MIFARE_MINI_PICC */
-	NFC_MIFARE_1K_PICC, 	/**< MIFARE_1K_PICC */
-	NFC_MIFARE_4K_PICC, 	/**< MIFARE_4K_PICC */
+	NFC_MIFARE_MINI_PICC,	/**< MIFARE_MINI_PICC */
+	NFC_MIFARE_1K_PICC,	/**< MIFARE_1K_PICC */
+	NFC_MIFARE_4K_PICC,	/**< MIFARE_4K_PICC */
 	NFC_MIFARE_ULTRA_PICC,	/**< MIFARE_ULTRA_PICC */
 	NFC_MIFARE_DESFIRE_PICC,	/**< MIFARE_DESFIRE_PICC */
 	NFC_ISO14443_B_PICC,	/**< ISO14443_B PICC */
@@ -103,11 +106,12 @@ typedef enum {
 	NFC_FELICA_PICC,	/**< FELICA PICC */
 	NFC_JEWEL_PICC,	/**< JEWEL PICC */
 	NFC_ISO15693_PICC,	/**< ISO15693 PICC */
+	NFC_BARCODE_128_PICC, /**< BARCODE_128 PICC */
+	NFC_BARCODE_256_PICC, /**< BARCODE_256 PICC */
+
 	NFC_NFCIP1_TARGET,	/**< NFCIP1_TARGET */
 	NFC_NFCIP1_INITIATOR,	/**< NFCIP1_INITIATOR */
 } nfc_tag_type_e;
-
-
 
 /**
  * @brief Enumerations for NFC Tag filter
@@ -125,17 +129,6 @@ typedef enum {
 } nfc_tag_filter_e;
 
 /**
- * @brief Enumerations of polling request code for FeliCa tag
- * @ingroup CAPI_NETWORK_NFC_TAG_FELICA
- */
-typedef enum {
-	NFC_TAG_FELICA_POLL_NO_REQUEST = 0x00,	/**< NO REQUEST */
-	NFC_TAG_FELICA_POLL_SYSTEM_CODE_REQUEST= 0x01,	/**< SYSTEM CODE REQUEST */
-	NFC_TAG_FELICA_POLL_COMM_SPEED_REQUEST= 0x02,	/**< COMM SPEED REQUEST */
-} nfc_tag_felica_poll_request_code_e;
-
-
-/**
  * @brief Enumerations for NFC discovered type
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  */
@@ -150,13 +143,13 @@ typedef enum {
  */
 typedef enum{
 	NFC_SE_EVENT_START_TRANSACTION, /**< This event notifies the terminal host that it shall launch an application associated to an NFC application in a UICC(Universal Integrated Circuit Card) host. */
-	NFC_SE_EVENT_END_TRANSACTION, 	/**< This event notifies the terminal host that current transaction in process was ended. */
-	NFC_SE_EVENT_CONNECTIVITY, /**< It's ready signal to communicate UICC(Universal Integrated Circuit Card) with terminal host. \nUICC(Universal Integrated Circuit Card) create pipe and open the pipe chanel.\nThen it sends the signal to terminal host or host controller. */
-	NFC_SE_EVENT_FIELD_ON, /**< When the CLF(Contactless Front-end) detects a RF field, the card RF gate sends the event #NFC_SE_EVENT_FIELD_ON to the card application gate.\nWhen there are multiple open card RF gates the CLF shall send the #NFC_SE_EVENT_FIELD_ON on all open pipes to these gates.Next the CLF starts the initialization and anti-collision process as defined in ISO/IEC 14443-3 [6]*/
-	NFC_SE_EVENT_FIELD_OFF,	/**< When the CLF(Contactless Front-end) detects that the RF field is off, the card RF gate shall send #NFC_SE_EVENT_FIELD_OFF to the card application gate.\nWhen there are multiple open card RF gates the CLF shall send the #NFC_SE_EVENT_FIELD_OFF to one gate only.*/
+	NFC_SE_EVENT_END_TRANSACTION,	/**< This event notifies the terminal host that current transaction in process was ended. */
+	NFC_SE_EVENT_CONNECTIVITY, /**< It's ready signal to communicate UICC(Universal Integrated Circuit Card) with terminal host. UICC(Universal Integrated Circuit Card) create pipe and open the pipe chanel. Then it sends the signal to terminal host or host controller. */
+	NFC_SE_EVENT_FIELD_ON, /**< When the CLF(Contactless Front-end) detects a RF field, the card RF gate sends the event #NFC_SE_EVENT_FIELD_ON to the card application gate. When there are multiple open card RF gates the CLF shall send the #NFC_SE_EVENT_FIELD_ON on all open pipes to these gates.Next the CLF starts the initialization and anti-collision process as defined in ISO/IEC 14443-3 [6]*/
+	NFC_SE_EVENT_FIELD_OFF,	/**< When the CLF(Contactless Front-end) detects that the RF field is off, the card RF gate shall send #NFC_SE_EVENT_FIELD_OFF to the card application gate. When there are multiple open card RF gates the CLF shall send the #NFC_SE_EVENT_FIELD_OFF to one gate only.*/
 	NFC_SE_EVENT_TRANSACTION, /**< This event  notifies , external reader trys to access secure element */
 	NFC_SE_EVENT_SE_TYPE_CHANGED, /**< This event notifies, changing the emulated secure element type */
-	NFC_SE_EVENT_SE_CARD_EMULATION_CHANGED
+	NFC_SE_EVENT_CARD_EMULATION_CHANGED, /**< This event notifies, changing the card emulation mode */
 } nfc_se_event_e;
 
 /**
@@ -170,27 +163,35 @@ typedef enum{
 } nfc_se_type_e;
 
 /**
- *  * @brief Enumerations for NFC Card Emulation Mode type
- *   * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- *    */
+ * @brief Enumerations for NFC Card Emulation Mode type
+ * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ */
 typedef enum{
 	NFC_SE_CARD_EMULATION_MODE_OFF = 0x00, /**< Card Emulation mode OFF */
 	NFC_SE_CARD_EMULATION_MODE_ON = 0x01, /**< Card Emulation mode ON */
 } nfc_se_card_emulation_mode_type_e;
 
 /**
- * @brief Enumerations for NFC AC(Alternative Carrier)
+ * @brief Enumerations for SNEP event
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  */
 typedef enum {
-	NFC_AC_TYPE_BT = 0x00, /**< Bluetooth AC*/
-	NFC_AC_TYPE_WIFI, /**<Wifi AC*/
-	NFC_AC_TYPE_WIFI_DIRECT,/**<Wifi-direct AC*/
-	NFC_AC_TYPE_UNKNOWN, /* No selected preferred AC */
-} nfc_ac_type_e ;
+	NFC_SNEP_EVENT_STOP = 0x00, /**< server or client stopped */
+	NFC_SNEP_EVENT_START = 0x01, /**< server started or client connected */
+	NFC_SNEP_EVENT_GET = 0x02, /**< server received get request */
+	NFC_SNEP_EVENT_PUT = 0x03, /**< server received put request */
+	NFC_SNEP_EVENT_REGISTER = 0x04, /**< service registered */
+	NFC_SNEP_EVENT_UNREGISTER = 0x05, /**< service unregistered */
+} nfc_snep_event_e;
 
-
-
+/**
+ * @brief Enumerations for SNEP request type
+ * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
+ */
+typedef enum {
+	NFC_SNEP_GET = 0x01, /**< get request */
+	NFC_SNEP_PUT = 0x02, /**< put request */
+} nfc_snep_type_e;
 
 /**
  * @brief The handle to the NDEF record
@@ -210,12 +211,23 @@ typedef struct _ndef_message_s *nfc_ndef_message_h;
  */
 typedef struct _net_nfc_target_info_s *nfc_tag_h;
 
-
 /**
  * @brief The handle to NFC p2p target
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  */
 typedef void *nfc_p2p_target_h;
+
+/**
+ * @brief The handle to NFC p2p snep instance
+ * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
+ */
+typedef struct _nfc_p2p_snep_s *nfc_p2p_snep_h;
+
+/**
+ * @brief The handle to NFC secure element instance
+ * @ingroup CAPI_NETWORK_NFC_SE_MODULE
+ */
+typedef void *nfc_se_h;
 
 /**
  * @brief The default factory key.
@@ -278,6 +290,7 @@ extern const unsigned char NFC_RECORD_HANDOVER_SELECT_TYPE[2];
 
 /**
  * @brief Called after nfc_manager_set_activation() has completed.
+ * @internal
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] error The result
@@ -298,27 +311,7 @@ typedef void (* nfc_activation_completed_cb)(nfc_error_e error, void *user_data)
  */
 typedef void (*nfc_activation_changed_cb)(bool activated , void *user_data);
 
-/**
- * @brief Called after nfc_manager_initialize() has completed.
- * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- *
- * @param [in] error The result
- * @param [in] user_data The user data passed from the callback registration function
- *
- * @see nfc_manager_initialize()
- */
-typedef void (* nfc_initialize_completed_cb)(nfc_error_e error, void *user_data);
-
-
-/**
- * @brief Called after nfc_manager_set_card_emulation_se_type() has completed.
- * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- *
- * @param [in] error The result
- * @param [in] user_data The user data passed from the callback registration function
- *
- * @see nfc_manager_set_card_emulation_se_type()
- */
+//for backward compativility
 typedef void (* nfc_set_card_emulation_completed_cb)(nfc_error_e error, void *user_data);
 
 /**
@@ -326,7 +319,7 @@ typedef void (* nfc_set_card_emulation_completed_cb)(nfc_error_e error, void *us
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @remarks  The tag handle does not have detail target info when an NFC tag disappeared.\n
- * 	So then do not use nfc_tag_get_keys().
+ * 	So then do not use tag functions which use tag handle.
  *
  * @param [in] type The discovered type attached or detached
  * @param [in] tag The handle to NFC tag
@@ -365,9 +358,9 @@ typedef void (* nfc_ndef_discovered_cb)(nfc_ndef_message_h message, void *user_d
  * @param[in] user_data The user data passed from the foreach function
  *
  * @return @c true to continue with the next iteration of the loop, \n @c false to break out of the loop.
- * @pre nfc_tag_foreach_informations() invokes this callback.
+ * @pre nfc_tag_foreach_information() invokes this callback.
  *
- * @see	nfc_tag_foreach_informations()
+ * @see	nfc_tag_foreach_information()
  */
 
 typedef bool (*nfc_tag_information_cb)(const char *key, const unsigned char *value, int value_size, void *user_data);
@@ -380,7 +373,7 @@ typedef bool (*nfc_tag_information_cb)(const char *key, const unsigned char *val
  * @remarks @a buffer will be automatically destroyed when the callback function returns. (Do not release @a buffer.)
  *
  * @param [in] result The result of function call
- * @param [in] buffer	The result data
+ * @param [in] buffer The result data
  * @param [in] buffer_size The size of buffer in bytes
  * @param [in] user_data The user data passed from nfc_tag_transceive()
  *
@@ -615,62 +608,45 @@ typedef void (*nfc_p2p_send_completed_cb)(nfc_error_e result, void *user_data);
  * @see nfc_p2p_set_data_received_cb()
  * @see nfc_p2p_unset_data_received_cb()
  */
-typedef void (*nfc_p2p_data_recived_cb)(nfc_p2p_target_h target, nfc_ndef_message_h message, void *user_data);
-
+typedef void (*nfc_p2p_data_received_cb)(nfc_p2p_target_h target, nfc_ndef_message_h message, void *user_data);
 
 /**
- * @brief Called after nfc_p2p_connection_handover() has completed.
+ * @brief Called when SNEP event is raised
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
- * @remark To use the @a ac_data outside this function, copy the @a ac_data.
- * @remark @a ac_data could be NULL, if nfc_p2p_connection_handover failed.
- * @remark If @a carrier is #NFC_AC_TYPE_BT, @ac_data should be converted to 'char *' type. This is bluetooth address information.
+ * @param [in] handle The handle of current snep instance
+ * @param [in] event The kind of snep event
+ * @param [in] result The result of snep event
+ * @param [in] msg The ndef message which received from client or result of get request
+ * @param [in] user_data The user data passed from snep apis.
  *
- * @param [in] result The result of function call
- * @param [in] carrier The type of Alternative Carrier
- * @param [in] ac_data The connected remote device AC(Alternative Carrier) information data
- * @param [in] ac_data_size The connected remote device AC(Alternative Carrier) information data size
- * @param [in] user_data The user data passed from nfc_p2p_connection_handover()
- *
- * @see nfc_p2p_connection_handover()
+ * @see nfc_snep_start_server()
+ * @see nfc_snep_send_client_request()
  */
-typedef void (*nfc_p2p_connection_handover_completed_cb)(nfc_error_e result, nfc_ac_type_e carrior, void * ac_data, int ac_data_size , void *user_data);
+typedef void (*nfc_snep_event_cb)(nfc_p2p_snep_h handle,
+	nfc_snep_event_e event, nfc_error_e result,
+	nfc_ndef_message_h msg, void *user_data);
 
 /**
  * @brief Gets the value that indicates whether NFC is supported.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @remarks This function can executed Regardless of nfc_manager_initialize state.
  *
  * @return true on NFC supported,  otherwise false
- *
- * @see nfc_manager_set_activation()
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_ILLEGAL_STATE Illegal state
+ * @exception #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ * @exception #NFC_ERROR_OPERATION_FAILED Operation fail
  */
-
 bool nfc_manager_is_supported(void);
 
 /**
- * @brief Sets NFC Activation
- * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- *
- * @param [in] activation The NFC state for setting
- * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
- * @param [in] user_data The user data to be passed to the callback function
- *
- * @return 0 on success, otherwise a negative error value.
- * @retval #NFC_ERROR_NONE Successful
- * @retval #NFC_ERROR_OPERATION_FAILED Operation fail
- * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
- * @retval #NFC_ERROR_ALREADY_ACTIVATED Already activated
- * @retval #NFC_ERROR_ALREADY_DEACTIVATED Already deactivated
- *
- * @see nfc_manager_is_activated()
- * @see nfc_activation_completed_cb()
- */
-int nfc_manager_set_activation(bool activation, nfc_activation_completed_cb callback, void *user_data);
-
-/**
  * @brief Set NFC Activation state changed callback
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] callback The callback function to invoke when activation state is changed.
@@ -678,6 +654,8 @@ int nfc_manager_set_activation(bool activation, nfc_activation_completed_cb call
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER Invalid parameter
  *
  * @see nfc_activation_changed_cb()
@@ -687,71 +665,89 @@ int nfc_manager_set_activation_changed_cb(nfc_activation_changed_cb callback , v
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_manager_set_activation_changed_cb()
  * @see nfc_activation_changed_cb()
  */
 void nfc_manager_unset_activation_changed_cb(void);
 
+/**
+ * @brief Sets NFC Activation
+ * @since_tizen 2.3
+ * @privlevel platform
+ * @privilege %http://tizen.org/privilege/nfc.admin
+ * @internal
+ * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+
+ * @param [in] activation The NFC state for setting
+ * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
+ * @param [in] user_data The user data to be passed to the callback function
+ *
+ * @post It invokes nfc_activation_completed_cb() when it has completed to set activation.\n
+ * The Callback can receive error code when process is done.
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_ALREADY_ACTIVATED Already activated
+ * @retval #NFC_ERROR_ALREADY_DEACTIVATED Already deactivated
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation fail
+ *
+ * @see nfc_manager_is_activated()
+ * @see nfc_activation_completed_cb()
+*/
+int nfc_manager_set_activation(bool activation, nfc_activation_completed_cb callback, void *user_data);
 
 /**
  * @brief Gets NFC Activation state
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @remarks This function can executed Regardless of nfc_manager_initialize state.
  *
  * @return true on NFC activated,  otherwise false
- *
- * @see nfc_manager_set_activation()
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_ILLEGAL_STATE Illegal state
+ * @exception #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ * @exception #NFC_ERROR_OPERATION_FAILED Operation fail
  */
-
 bool nfc_manager_is_activated(void);
 
 /**
  * @brief Initializes NFC Manager.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  * @remarks This function must be called before proceeding any other nfc functions\n
- *	Internally it makes socket connection to NFC manager.\n
  *	When an application crashes or exits without the deinitialization. NFC manager automatically deinitializes the process itself.\n
- *	This function is asynchronous.
- *
- * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
- * @param [in] user_data The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
  * @retval #NFC_ERROR_OPERATION_FAILED Operation fail
  *
- * @see nfc_manager_initialize_sync()
  * @see nfc_manager_deinitialize()
  */
-int nfc_manager_initialize(nfc_initialize_completed_cb callback, void *user_data);
-
-/**
- * @brief Initializes NFC Manager.
- * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- * @remarks This function must be called before proceeding any other nfc functions\n
- *	Internally it makes socket connection to NFC manager.\n
- *	When an application crashes or exits without the deinitialization. NFC manager automatically deinitializes the process itself.\n
- *	This function is synchronous.
- *
- * @return 0 on success, otherwise a negative error value.
- * @retval #NFC_ERROR_NONE Successful
- * @retval #NFC_ERROR_OPERATION_FAILED Operation fail
- *
- * @see nfc_manager_initialize()
- * @see nfc_manager_deinitialize()
- */
-int nfc_manager_initialize_sync();
-
+int nfc_manager_initialize();
 
 /**
  * @brief Releases all the resource of the NFC Manager and disconnect the session between an application and NFC Manager.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
  * @retval #NFC_ERROR_OPERATION_FAILED Operation fail
  *
  * @see nfc_manager_initialize()
@@ -767,6 +763,8 @@ int nfc_manager_deinitialize(void);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_manager_unset_tag_discovered_cb()
@@ -776,7 +774,14 @@ int nfc_manager_set_tag_discovered_cb(nfc_tag_discovered_cb callback, void *user
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_manager_set_tag_discovered_cb()
  * @see nfc_tag_discovered_cb()
@@ -785,6 +790,7 @@ void nfc_manager_unset_tag_discovered_cb(void);
 
 /**
  * @brief Registers a callback function for receiving NDEF Message discovered notification
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] callback The callback function called when NDEF Message is discovered
@@ -792,6 +798,8 @@ void nfc_manager_unset_tag_discovered_cb(void);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_manager_unset_ndef_discovered_cb()
@@ -801,7 +809,14 @@ int nfc_manager_set_ndef_discovered_cb(nfc_ndef_discovered_cb callback, void *us
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_manager_set_ndef_discovered_cb()
  * @see nfc_ndef_discovered_cb()
@@ -810,6 +825,7 @@ void nfc_manager_unset_ndef_discovered_cb(void);
 
 /**
  * @brief Registers a callback function for receiving NFC peer-to-peer target discovered notification.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] callback The callback function called when NFC peer-to-peer target is discovered
@@ -817,6 +833,8 @@ void nfc_manager_unset_ndef_discovered_cb(void);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_manager_unset_ndef_discovered_cb()
@@ -826,7 +844,14 @@ int nfc_manager_set_p2p_target_discovered_cb(nfc_p2p_target_discovered_cb callba
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_manager_set_p2p_target_discovered_cb()
  * @see nfc_p2p_target_discovered_cb()
@@ -836,6 +861,7 @@ void nfc_manager_unset_p2p_target_discovered_cb(void);
 
 /**
  * @brief Registers a callback function for receiving  Secure Element (SIM/UICC(Universal Integrated Circuit Card)) event.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] callback The callback function called when occurred Secure Element (SIM/UICC(Universal Integrated Circuit Card)) event.
@@ -843,6 +869,8 @@ void nfc_manager_unset_p2p_target_discovered_cb(void);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_se_event_cb()
@@ -853,7 +881,14 @@ int nfc_manager_set_se_event_cb(nfc_se_event_cb callback, void *user_data);
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_se_event_cb()
  * @see nfc_manager_set_se_event_cb()
@@ -862,27 +897,36 @@ void nfc_manager_unset_se_event_cb(void);
 
 /**
  * @brief Registers a callback function for receiving  Secure Element (SIM/UICC(Universal Integrated Circuit Card)) transaction event(#NFC_SE_EVENT_TRANSACTION) data.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
- * @param [in] se_type The type os secure element
+ * @param [in] se_type The type of secure element.
  * @param [in] callback The callback function called when occurred SE transaction event.
  * @param [in] user_data The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_se_transaction_event_cb()
  * @see nfc_manager_unset_se_transaction_event_cb()
  */
-int nfc_manager_set_se_transaction_event_cb(nfc_se_type_e se_type,
-		nfc_se_transaction_event_cb callback, void *user_data);
+int nfc_manager_set_se_transaction_event_cb(nfc_se_type_e se_type, nfc_se_transaction_event_cb callback, void *user_data);
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] se_type The type of secure element.
+ *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_se_transaction_event_cb()
  * @see nfc_manager_set_se_transaction_event_cb()
@@ -890,7 +934,63 @@ int nfc_manager_set_se_transaction_event_cb(nfc_se_type_e se_type,
 void nfc_manager_unset_se_transaction_event_cb(nfc_se_type_e se_type);
 
 /**
+ * @brief give the priority to the foreground application when dispatching transaction event.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
+ * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ * @remarks This function must be called only when the application is in the foreground. \n
+ *	If the application go out from foreground, application must call "nfc_manager_disable_transaction_fg_dispatch" to disable foreground dispatch \n\n
+ * @remarks Security level can be determined by the manufacturer usage.\n
+ * If a security issue is occurred, contact with the manufacturer of the product.\n
+ * If you want to know about security level in detail, See the GSMA specification.\n
+ * (http://www.gsma.com/digitalcommerce/wp-content/uploads/2013/12/GSMA-NFC05-NFC-Handset-APIs-Requirement-Specification-version-4-1.pdf)
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_SECURITY_RESTRICTED Security restricted by Access Control
+ * @retval #NFC_ERROR_ILLEGAL_STATE Illegal state
+ * @retval #NFC_ERROR_OPERATION_FAILED	IPC fail
+ *
+ * @see nfc_manager_disable_transaction_fg_dispatch()
+ */
+int nfc_manager_enable_transaction_fg_dispatch();
+
+/**
+ * @brief disable foreground dispatch for "EVT_TRANSACTION" to the givin application.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
+ * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
+ * @remarks After calling "nfc_manager_enable_transaction_fg_dispatch", an application must call this api when it go out from foureground.  \n\n
+ * @remarks Security level can be determined by the manufacturer usage.\n
+ * If a security issue is occurred, contact with the manufacturer of the product.\n
+ * If you want to know about security level in detail, See the GSMA specification.\n
+ * (http://www.gsma.com/digitalcommerce/wp-content/uploads/2013/12/GSMA-NFC05-NFC-Handset-APIs-Requirement-Specification-version-4-1.pdf)
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_SECURITY_RESTRICTED Security restricted by Access Control
+ * @retval #NFC_ERROR_ILLEGAL_STATE Illegal state
+ * @retval #NFC_ERROR_OPERATION_FAILED	IPC fail
+ *
+ * @see nfc_manager_enable_transaction_fg_dispatch()
+ */
+int nfc_manager_disable_transaction_fg_dispatch();
+
+/**
  * @brief Gets NDEF message cached when the tag is detected or when data received from NFC peer-to-peer target.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @remarks This function is used to get the ndef message that was read before launched your application.
@@ -898,14 +998,19 @@ void nfc_manager_unset_se_transaction_event_cb(nfc_se_type_e se_type);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
- * @retval #NFC_ERROR_INVALID_NDEF_MESSAGE The cached message does not exist
+ * @retval #NFC_ERROR_NO_NDEF_MESSAGE The cached message does not exist
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ *
  */
 int nfc_manager_get_cached_message(nfc_ndef_message_h *ndef_message);
 
-
 /**
  * @brief Sets filter of target types.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  * @remarks Bit operator OR(|) can be used in the configure parameter (like  NFC_TAG_FILTER_ISO14443A_ENABLE | NFC_TAG_FILTER_ISO14443B_ENABLE)
  *	or you may choose "NFC_TAG_ALL_ENABLE" enum value to get all result.
@@ -914,6 +1019,13 @@ int nfc_manager_get_cached_message(nfc_ndef_message_h *ndef_message);
  *
  * @param [in] filter The filter value with bits operation #nfc_tag_filter_e
  *
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @exception #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ *
  * @see nfc_manager_get_tag_filter()
  * @see nfc_tag_discovered_cb()
  */
@@ -921,12 +1033,18 @@ void nfc_manager_set_tag_filter(int filter);
 
 /**
  * @brief Gets the current filter status.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @remarks Bit operation OR(|) is used in return data\n
  * The default value is NFC_TAG_FILTER_ALL_ENABLE
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  *
  * @return The filter which is set #nfc_tag_filter_e
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  *
  * @see nfc_manager_set_tag_filter()
  */
@@ -934,33 +1052,59 @@ int nfc_manager_get_tag_filter(void);
 
 /**
  * @brief Gets current connected tag.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [out] tag The connected tag
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_NO_DEVICE There is no connected target
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
  * @retval #NFC_ERROR_NO_DEVICE There is no connected tag
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  */
 int nfc_manager_get_connected_tag(nfc_tag_h *tag);
 
 /**
  * @brief Gets current connected p2p target
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [out] target The connected target
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  * @retval #NFC_ERROR_NO_DEVICE There is no connected target
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_NO_DEVICE There is no connected tag
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ *
  */
 int nfc_manager_get_connected_target(nfc_p2p_target_h *target);
 
 
 /**
  * @brief Enable or disable the system handling for tag and target discovered event
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  * @remarks In default, The system handling is enabled.
  *
@@ -968,7 +1112,11 @@ int nfc_manager_get_connected_target(nfc_p2p_target_h *target);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
- * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
  * @see nfc_manager_is_system_handler_enabled()
  */
@@ -976,49 +1124,82 @@ int nfc_manager_set_system_handler_enable(bool enable);
 
 /**
  * @brief Gets the state of the system handler
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  * @remarks In default, The system handling is enabled.
+ * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  *
  * @return true on enabled, otherwise false.
+ *
+ * @exception #NFC_ERROR_NONE Success
+ * @exception #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @exception #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @exception #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ * @exception #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @exception #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @exception #NFC_ERROR_OPERATION_FAILED Operation failed
  *
  * @see nfc_manager_set_system_handler_enable()
  */
 bool nfc_manager_is_system_handler_enabled(void);
 
 /**
- * @brief Sets the card emulation Secure Element type
+ * @brief Gets the card emulation Secure Element type
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
- * @remarks To disable card emulation mode, set NFC_SE_TYPE_DISABLE\n
- * This API is asynchronous function, This operation is completed when NFC_SE_EVENT_SE_TYPE_CHANGED event or nfc_set_card_emulation_completed_cb was invoked.
+ * @remarks Security level can be determined by the manufacturer usage.\n
+ * If a security issue is occurred, contact with the manufacturer of the product.\n
+ * If you want to know about security level in detail, See the GSMA specification.\n
+ * (http://www.gsma.com/digitalcommerce/wp-content/uploads/2013/12/GSMA-NFC05-NFC-Handset-APIs-Requirement-Specification-version-4-1.pdf)
  *
  * @param [in] type The type of Secure Element
- * @param [in] callback The callback function to invoke after this function has completed\nIt can be null if notification is not required
- * @param [in] The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_SECURITY_RESTRICTED Security restricted by Access Control
+ * @retval #NFC_ERROR_ILLEGAL_STATE Illegal state
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @see nfc_manager_get_card_emulation_se_type()
  */
-int nfc_manager_set_card_emulation_se_type(nfc_se_type_e type, nfc_set_card_emulation_completed_cb callback, void* user_data);
+int nfc_manager_set_se_type(nfc_se_type_e type);
 
 /**
  * @brief Gets the card emulation Secure Element type
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [out] type The type of Secure Element
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security restricted by SMACK
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @see nfc_manager_set_card_emulation_se_type()
  */
-int nfc_manager_get_card_emulation_se_type(nfc_se_type_e* type);
+int nfc_manager_get_se_type(nfc_se_type_e *type);
 
 /**
  * @brief Creates a record with given parameter value.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks Every data buffer is deeply copied.\n
@@ -1035,6 +1216,8 @@ int nfc_manager_get_card_emulation_se_type(nfc_se_type_e* type);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
@@ -1043,11 +1226,12 @@ int nfc_manager_get_card_emulation_se_type(nfc_se_type_e* type);
  * @see nfc_ndef_record_create_mime()
  * @see nfc_ndef_record_destroy()
  */
-int nfc_ndef_record_create(nfc_ndef_record_h *record, nfc_record_tnf_e tnf, const unsigned char *type, int type_size, const unsigned char *id, int id_size, const unsigned char *payload, int payload_size);
+int nfc_ndef_record_create(nfc_ndef_record_h *record, nfc_record_tnf_e tnf, const unsigned char *type, int type_size, const unsigned char *id, int id_size, const unsigned char *payload, unsigned int payload_size);
 
 
 /**
  * @brief Creates a record with text type payload
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks This function does not encode the text. @a text will be assumed as that it is already encoded with encode type.\n
@@ -1065,6 +1249,8 @@ int nfc_ndef_record_create(nfc_ndef_record_h *record, nfc_record_tnf_e tnf, cons
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
@@ -1080,6 +1266,7 @@ int nfc_ndef_record_create_text(nfc_ndef_record_h *record, const char *text, con
 
 /**
  * @brief Creates a record with URI type payload
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks The uri string will be deep copied.\n
@@ -1090,11 +1277,12 @@ int nfc_ndef_record_create_text(nfc_ndef_record_h *record, const char *text, con
  * Defined in Record Type Definition Technical Specifications.
  *
  * @param [out] record A handle to record
- * @param [in] protocol_scheme	The protocol scheme
  * @param [in] uri	The URI string that will be stored in the payload
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
@@ -1109,6 +1297,7 @@ int nfc_ndef_record_create_uri(nfc_ndef_record_h* record, const char *uri);
 
 /**
  * @brief Creates a record with MIME type payload
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks The data buffer will be deep copied.\n
@@ -1121,12 +1310,14 @@ int nfc_ndef_record_create_uri(nfc_ndef_record_h* record, const char *uri);
  * Defined in Record Type Definition Technical Specifications.
  *
  * @param [out] record A handle to record
- * @param [in] mime_type	The mime type [RFC 2046] (ex. text/plain, image/jpeg )\nThis value is stored in type field
+ * @param [in] mime_type	The mime type [RFC 2046] (ex. text/plain, image/jpeg ) This value is stored in type field
  * @param [in] data	The pointer of data
  * @param [in] data_size	The size of data
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
@@ -1136,17 +1327,20 @@ int nfc_ndef_record_create_uri(nfc_ndef_record_h* record, const char *uri);
  * @see nfc_ndef_record_destroy()
  * @see nfc_ndef_record_get_mime_type()
  */
-int nfc_ndef_record_create_mime(nfc_ndef_record_h* record, const char *mime_type, const unsigned char *data, int data_size);
+int nfc_ndef_record_create_mime(nfc_ndef_record_h* record, const char *mime_type, const unsigned char *data, unsigned int data_size);
 
 
 /**
  * @brief Destroys the record handle
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @param [in] record The handle to record
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_ndef_record_create()
@@ -1158,6 +1352,7 @@ int nfc_ndef_record_destroy(nfc_ndef_record_h record);
 
 /**
  * @brief Sets record ID
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks The ID buffer are deep copied.
@@ -1167,7 +1362,9 @@ int nfc_ndef_record_destroy(nfc_ndef_record_h record);
  * @param [in] id_size The size of ID in bytes
  *
  * @return 0 on success, otherwise a negative error value.
- * @retval	#NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_ndef_record_get_id()
@@ -1176,6 +1373,7 @@ int nfc_ndef_record_set_id(nfc_ndef_record_h record, unsigned char *id, int id_s
 
 /**
  * @brief Gets record ID
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks It may return NULL pointer if the ID is not exist\n
@@ -1184,10 +1382,12 @@ int nfc_ndef_record_set_id(nfc_ndef_record_h record, unsigned char *id, int id_s
  *
  * @param [in] record The handle to record
  * @param [out] id The record ID ( do not free )
- * @param [out] id_size The size of ID in bytes
+ * @param [out] size The size of ID in bytes
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_ndef_record_set_id()
@@ -1196,6 +1396,7 @@ int nfc_ndef_record_get_id(nfc_ndef_record_h record, unsigned char **id, int *si
 
 /**
  * @brief Gets record payload.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks This function gives you  the pointer of payload that is contained by record\n
@@ -1207,12 +1408,15 @@ int nfc_ndef_record_get_id(nfc_ndef_record_h record, unsigned char **id, int *si
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  */
 int nfc_ndef_record_get_payload(nfc_ndef_record_h record, unsigned char ** payload, unsigned int *size);
 
 /**
  * @brief Gets record type.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks This function gives you  the pointer of type that is contained by record.\n
@@ -1224,12 +1428,15 @@ int nfc_ndef_record_get_payload(nfc_ndef_record_h record, unsigned char ** paylo
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  */
 int nfc_ndef_record_get_type(nfc_ndef_record_h record, unsigned char **type, int *size);
 
 /**
  * @brief Gets record TNF(Type Name Format) value.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @param [in] record The handle to record
@@ -1237,12 +1444,15 @@ int nfc_ndef_record_get_type(nfc_ndef_record_h record, unsigned char **type, int
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  */
 int nfc_ndef_record_get_tnf(nfc_ndef_record_h record, nfc_record_tnf_e *tnf);
 
 /**
  * @brief Gets text from text record
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks This function returns newly allocated string, this value must be deallocated by caller.\n
@@ -1254,15 +1464,18 @@ int nfc_ndef_record_get_tnf(nfc_ndef_record_h record, nfc_record_tnf_e *tnf);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_RECORD_TYPE Invalid record type
- *
+ *s
  * @see nfc_ndef_record_create_text()
  */
 int nfc_ndef_record_get_text(nfc_ndef_record_h record, char **text);
 
 /**
  * @brief Gets language code from text record
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  * @remarks This function returns newly allocated string, this value must be deallocated by caller.\n
  * This function is valid only for text type record.\n
@@ -1273,6 +1486,8 @@ int nfc_ndef_record_get_text(nfc_ndef_record_h record, char **text);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_RECORD_TYPE Invalid record type
  *
@@ -1282,6 +1497,7 @@ int nfc_ndef_record_get_langcode(nfc_ndef_record_h record, char **lang_code);
 
 /**
  * @brief Gets encoding type from text record
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks  This function is valid only for text type record.\n
@@ -1292,6 +1508,8 @@ int nfc_ndef_record_get_langcode(nfc_ndef_record_h record, char **lang_code);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_RECORD_TYPE Invalid record type
  *
@@ -1301,6 +1519,7 @@ int nfc_ndef_record_get_encode_type(nfc_ndef_record_h record, nfc_encode_type_e 
 
 /**
  * @brief Gets URI from uri record
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks The function returns newly allocated string, this value must be deallocated by caller.\n
@@ -1312,6 +1531,8 @@ int nfc_ndef_record_get_encode_type(nfc_ndef_record_h record, nfc_encode_type_e 
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_RECORD_TYPE Invalid record type
  *
@@ -1322,6 +1543,7 @@ int nfc_ndef_record_get_uri(nfc_ndef_record_h record, char **uri);
 
 /**
  * @brief Gets mime type from mime type record
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_RECORD_MODULE
  *
  * @remarks The function returns newly allocated string, this value must be deallocated by caller.\n
@@ -1333,6 +1555,8 @@ int nfc_ndef_record_get_uri(nfc_ndef_record_h record, char **uri);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_RECORD_TYPE Invalid record type
  *
@@ -1343,12 +1567,15 @@ int nfc_ndef_record_get_mime_type(nfc_ndef_record_h record, char **mime_type);
 
 /**
  * @brief Creates NDEF message handle
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @param [out] ndef_message A handle to NDEF message
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
@@ -1359,6 +1586,7 @@ int nfc_ndef_message_create(nfc_ndef_message_h *ndef_message);
 
 /**
  * @brief Creates NDEF message handle from raw serial bytes.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @remarks It consumes the bytes array until get the ME(Message End) flag*. It returns error if the bytes array does not have ME flag.\n
@@ -1370,6 +1598,8 @@ int nfc_ndef_message_create(nfc_ndef_message_h *ndef_message);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
@@ -1377,11 +1607,11 @@ int nfc_ndef_message_create(nfc_ndef_message_h *ndef_message);
  * @see nfc_ndef_message_destroy()
  * @see nfc_ndef_message_get_rawdata()
  */
-int nfc_ndef_message_create_from_rawdata(nfc_ndef_message_h *ndef_message,
-		const unsigned char *rawdata, unsigned int rawdata_size);
+int nfc_ndef_message_create_from_rawdata(nfc_ndef_message_h *ndef_message, const unsigned char *rawdata, unsigned int rawdata_size);
 
 /**
  * @brief Destroys NDEF message handle
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @remarks This function will free all these memory including record handles.
@@ -1390,6 +1620,8 @@ int nfc_ndef_message_create_from_rawdata(nfc_ndef_message_h *ndef_message,
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_ndef_message_create()
@@ -1399,6 +1631,7 @@ int nfc_ndef_message_destroy(nfc_ndef_message_h ndef_message);
 
 /**
  * @brief Gets the number of record in NDEF message
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @param [in] ndef_message The handle to NDEF message
@@ -1406,12 +1639,15 @@ int nfc_ndef_message_destroy(nfc_ndef_message_h ndef_message);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  */
 int nfc_ndef_message_get_record_count(nfc_ndef_message_h ndef_message, int *count);
 
 /**
  * @brief Gets serial bytes array of NDEF message.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @remarks It gets copy of the bytes array from NDEF message. @a rawdata must be released with free() by you.
@@ -1422,17 +1658,19 @@ int nfc_ndef_message_get_record_count(nfc_ndef_message_h ndef_message, int *coun
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_NDEF_MESSAGE Invalid NDEF message
  *
  * @see nfc_ndef_message_create_from_rawdata()
  */
-int nfc_ndef_message_get_rawdata(nfc_ndef_message_h ndef_message,
-		unsigned char **rawdata, unsigned int *rawdata_size);
+int nfc_ndef_message_get_rawdata(nfc_ndef_message_h ndef_message, unsigned char **rawdata, unsigned int *rawdata_size);
 
 /**
  * @brief Appends a record into NDEF message
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @remarks Appended record is handled by frameworks. The record is released by frameworks when message is released.
@@ -1442,6 +1680,8 @@ int nfc_ndef_message_get_rawdata(nfc_ndef_message_h ndef_message,
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_ndef_message_insert_record()
@@ -1451,6 +1691,7 @@ int nfc_ndef_message_append_record(nfc_ndef_message_h ndef_message, nfc_ndef_rec
 
 /**
  * @brief Inserts a record at index into NDEF message
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @remarks Appended record is handled by frameworks. The record is released by frameworks when message is released.\n
@@ -1462,6 +1703,8 @@ int nfc_ndef_message_append_record(nfc_ndef_message_h ndef_message, nfc_ndef_rec
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_NDEF_MESSAGE	Invalid NDEF message
  *
@@ -1472,6 +1715,7 @@ int nfc_ndef_message_insert_record(nfc_ndef_message_h ndef_message, int index, n
 
 /**
  * @brief Removes the record that indicated by index number and this deleted record will be freed.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @param [in] ndef_message The handle to NDEF message
@@ -1479,6 +1723,8 @@ int nfc_ndef_message_insert_record(nfc_ndef_message_h ndef_message, int index, n
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_INVALID_NDEF_MESSAGE	Invalid NDEF message
  *
@@ -1489,6 +1735,7 @@ int nfc_ndef_message_remove_record(nfc_ndef_message_h ndef_message, int index);
 
 /**
  * @brief Gets record by index.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_NDEF_MESSAGE_MODULE
  *
  * @remarks This function just return the pointer of record. if you change the record value it directly affects the NDEF message
@@ -1499,12 +1746,15 @@ int nfc_ndef_message_remove_record(nfc_ndef_message_h ndef_message, int index);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  */
 int nfc_ndef_message_get_record(nfc_ndef_message_h ndef_message, int index, nfc_ndef_record_h *record);
 
 /**
  * @brief Gets the type of NFC tag
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @param [in] tag The handle to NFC tag
@@ -1512,12 +1762,16 @@ int nfc_ndef_message_get_record(nfc_ndef_message_h ndef_message, int index, nfc_
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  */
 int nfc_tag_get_type(nfc_tag_h tag, nfc_tag_type_e *type);
 
 /**
  * @brief Checks whether the given NFC tag supports NDEF messages.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @param [in] tag The handle to NFC tag
@@ -1525,6 +1779,8 @@ int nfc_tag_get_type(nfc_tag_h tag, nfc_tag_type_e *type);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_tag_read_ndef()
@@ -1533,6 +1789,7 @@ int nfc_tag_is_support_ndef(nfc_tag_h tag, bool *is_supported);
 
 /**
  * @brief Gets the maximum NDEF message size that can be stored in NFC tag.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @remarks This max size indicates the maximum size of NDEF message that can be stored in this detected tag.
@@ -1542,12 +1799,15 @@ int nfc_tag_is_support_ndef(nfc_tag_h tag, bool *is_supported);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  */
 int nfc_tag_get_maximum_ndef_size(nfc_tag_h tag, unsigned int *maximum_ndef_bytes_size);
 
 /**
  * @brief Gets size of NDEF message that stored in the tag
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @param [in] tag The handle to NFC tag
@@ -1555,6 +1815,8 @@ int nfc_tag_get_maximum_ndef_size(nfc_tag_h tag, unsigned int *maximum_ndef_byte
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  */
@@ -1563,6 +1825,7 @@ int nfc_tag_get_ndef_size(nfc_tag_h tag, unsigned int *ndef_bytes_size);
 
 /**
  * @brief Retrieves all tag information
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @param[in] tag The handle to NFC tag
@@ -1571,7 +1834,10 @@ int nfc_tag_get_ndef_size(nfc_tag_h tag, unsigned int *ndef_bytes_size);
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  *
  */
 int nfc_tag_foreach_information(nfc_tag_h tag, nfc_tag_information_cb callback, void *user_data);
@@ -1579,6 +1845,9 @@ int nfc_tag_foreach_information(nfc_tag_h tag, nfc_tag_information_cb callback, 
 
 /**
  * @brief Transceives the data of the raw format card.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @details This function is the only way to access the raw format card (not formated),
 	each tag type requires own command to access tags. \n
 	This function provides the low level access of tag operation and you require the knowledge of each tag technology.
@@ -1592,14 +1861,18 @@ int nfc_tag_foreach_information(nfc_tag_h tag, nfc_tag_information_cb callback, 
 *
 * @return 0 on success, otherwise a negative error value.
 * @retval #NFC_ERROR_NONE Successful
+* @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+* @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
 * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
 * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
 * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
-* @retval #NFC_ERROR_OPERATION_FAILED Operation failed
 * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
 * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+* @retval #NFC_ERROR_OPERATION_FAILED Operation failed
 *
-* @post It invokes nfc_tag_transceive_completed_cb() when it has completed to t
+* @post It invokes nfc_tag_transceive_completed_cb() when it has completed to transceive data.\n
+* The Callback can receive error code when process is done.
+*
 * @see nfc_tag_read_ndef()
 * @see nfc_tag_is_support_ndef()
 */
@@ -1607,6 +1880,9 @@ int nfc_tag_transceive(nfc_tag_h tag, unsigned char *buffer, int buffer_size, nf
 
 /**
  * @brief Reads NDEF formatted data from NFC tag.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @param [in] tag The handle to NFC tag
@@ -1615,15 +1891,18 @@ int nfc_tag_transceive(nfc_tag_h tag, unsigned char *buffer, int buffer_size, nf
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  * @retval #NFC_ERROR_NOT_NDEF_FORMAT Not ndef format tag
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_tag_read_completed_cb() when it has completed to read NDEF formatted data.
+ * @post It invokes nfc_tag_read_completed_cb() when it has completed to read NDEF formatted data.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_tag_transceive()
  * @see nfc_tag_is_support_ndef()
@@ -1633,25 +1912,31 @@ int nfc_tag_read_ndef(nfc_tag_h tag, nfc_tag_read_completed_cb callback, void *u
 
 /**
  * @brief Writes NDEF formatted data.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
  * @param [in] tag The handle to NFC tag
  * @param [in] msg The message will be write to the tag
  * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
- * @param [in] user_dataa The user data to be passed to the callback function
+ * @param [in] user_data The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
-
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  * @retval #NFC_ERROR_NOT_NDEF_FORMAT Not ndef format tag
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_tag_write_completed_cb() when it has completed to write NDEF data.
+ * @post It invokes nfc_tag_write_completed_cb() when it has completed to write NDEF data.\n
+ * The Callback can receive error code when process is done.
+ *
  * @see nfc_tag_is_support_ndef()
  * @see nfc_tag_read_ndef()
  */
@@ -1659,6 +1944,9 @@ int nfc_tag_write_ndef(nfc_tag_h tag, nfc_ndef_message_h msg, nfc_tag_write_comp
 
 /**
  * @brief Formats the detected tag that can store NDEF message.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @details Some tags are required authentication. If the detected target doesn't need authentication, @a key can be NULL.
  * @ingroup CAPI_NETWORK_NFC_TAG_MODULE
  *
@@ -1670,15 +1958,18 @@ int nfc_tag_write_ndef(nfc_tag_h tag, nfc_ndef_message_h msg, nfc_tag_write_comp
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  * @retval #NFC_ERROR_NOT_NDEF_FORMAT Not ndef format tag
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_tag_format_completed_cb() when it has completed to format the NFC tag.
+ * @post It invokes nfc_tag_format_completed_cb() when it has completed to format the NFC tag.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_tag_is_support_ndef()
  */
@@ -1687,6 +1978,9 @@ int nfc_tag_format_ndef(nfc_tag_h tag, unsigned char *key, int key_size, nfc_tag
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Authenticates a sector with key A.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks I/O operations(read / write / increment / decrement / transfer / restore) will be available after successful authentication.\n
  * This function is only available for MIFARE classic.\n
  *	\n
@@ -1708,14 +2002,18 @@ int nfc_tag_format_ndef(nfc_tag_h tag, unsigned char *key, int key_size, nfc_tag
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_mifare_authenticate_with_keyA_completed_cb() when it has completed to authenticate the given sector with key A.
+ * @post It invokes nfc_mifare_authenticate_with_keyA_completed_cb() when it has completed to authenticate the given sector with key A.\n
+ * The Callback can receive error code when process is done.
+ *
  * @see nfc_mifare_authenticate_with_keyB()
  * @see nfc_mifare_read_block()
  * @see nfc_mifare_read_page()
@@ -1726,10 +2024,12 @@ int nfc_tag_format_ndef(nfc_tag_h tag, unsigned char *key, int key_size, nfc_tag
 */
 int nfc_mifare_authenticate_with_keyA(nfc_tag_h tag, int sector_index, unsigned char *auth_key, nfc_mifare_authenticate_with_keyA_completed_cb callback, void *user_data);
 
-
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Authenticates a sector with key B.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks I/O operations(read / write / increment / decrement / transfer / restore) will be available after successful authentication.\n
  * This function is only available for MIFARE classic.\n
  * 	\n
@@ -1751,14 +2051,18 @@ int nfc_mifare_authenticate_with_keyA(nfc_tag_h tag, int sector_index, unsigned 
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_mifare_authenticate_with_keyB_completed_cb() when it has completed to authenticate the given sector with key B.
+ * @post It invokes nfc_mifare_authenticate_with_keyB_completed_cb() when it has completed to authenticate the given sector with key B.\n
+ * The Callback can receive error code when process is done.
+ *
  * @see nfc_mifare_authenticate_with_keyA()
  * @see nfc_mifare_read_block()
  * @see nfc_mifare_read_page()
@@ -1773,6 +2077,9 @@ int nfc_mifare_authenticate_with_keyB(nfc_tag_h tag, int sector_index, unsigned 
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Reads a 16-byte block.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE classic.
  *
  * @param [in] tag The handle to NFC tag
@@ -1782,14 +2089,18 @@ int nfc_mifare_authenticate_with_keyB(nfc_tag_h tag, int sector_index, unsigned 
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_mifare_read_block_completed_cb() when it has completed to read a block.
+ * @post It invokes nfc_mifare_read_block_completed_cb() when it has completed to read a block.\n
+ * The Callback can receive error code when process is done.
+ *
  * @see nfc_mifare_read_page()
  * @see nfc_mifare_write_block()
 */
@@ -1798,6 +2109,9 @@ int nfc_mifare_read_block(nfc_tag_h tag, int block_index, nfc_mifare_read_block_
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Reads 4 pages(16 bytes).
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE Ultra light.\n
  * The MIFARE Ultralight protocol always reads 4 pages at a time, to reduce the number of commands required to read an entire tag.
  *
@@ -1809,14 +2123,18 @@ int nfc_mifare_read_block(nfc_tag_h tag, int block_index, nfc_mifare_read_block_
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_mifare_read_page_completed_cb() when it has completed to read a page.
+ * @post It invokes nfc_mifare_read_page_completed_cb() when it has completed to read a page.\n
+ * The Callback can receive error code when process is done.
+ *
  * @see nfc_mifare_read_block()
  * @see nfc_mifare_write_page()
 */
@@ -1825,6 +2143,9 @@ int nfc_mifare_read_page(nfc_tag_h tag, int page_index, nfc_mifare_read_page_com
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Writes block (16 byte) of data to the tag at a given block index.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE classic.
  *
  * @param [in] tag The handle to NFC tag
@@ -1836,15 +2157,17 @@ int nfc_mifare_read_page(nfc_tag_h tag, int page_index, nfc_mifare_read_page_com
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_mifare_write_block_completed_cb() when it has completed to write a block.
+ * @post It invokes nfc_mifare_write_block_completed_cb() when it has completed to write a block.\n The Callback can receive error code when process is done.
  *
  * @see nfc_mifare_write_page()
  * @see nfc_mifare_read_block()
@@ -1854,6 +2177,9 @@ int nfc_mifare_write_block(nfc_tag_h tag, int block_index, unsigned char *buffer
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Writes a page (4 bytes) of data to the tag at a given page index
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE Ultra light
  *
  * @param [in] tag The handle to NFC tag
@@ -1865,14 +2191,17 @@ int nfc_mifare_write_block(nfc_tag_h tag, int block_index, unsigned char *buffer
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  *
- * @post It invokes nfc_mifare_write_page_completed_cb() when it has completed to write a page.
+ * @post It invokes nfc_mifare_write_page_completed_cb() when it has completed to write a page.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_mifare_write_block()
  * @see nfc_mifare_read_page()
@@ -1882,6 +2211,9 @@ int nfc_mifare_write_page(nfc_tag_h tag, int page_index, unsigned char *buffer, 
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Increases a value block, storing the result in the temporary block on the tag.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE classic
  *
  * @param [in] tag The handle to NFC tag
@@ -1892,13 +2224,18 @@ int nfc_mifare_write_page(nfc_tag_h tag, int page_index, unsigned char *buffer, 
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ *
+ * @post It invokes nfc_mifare_increment_completed_cb() when it has completed to increment.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_mifare_decrement()
  * @see nfc_mifare_write_block()
@@ -1908,6 +2245,9 @@ int nfc_mifare_increment(nfc_tag_h tag, int block_index, int value, nfc_mifare_i
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Decreases a value block, storing the result in the temporary block on the tag.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks  This function is only available for MIFARE classic
  *
  * @param [in] tag The handle to NFC tag
@@ -1918,12 +2258,17 @@ int nfc_mifare_increment(nfc_tag_h tag, int block_index, int value, nfc_mifare_i
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ *
+ * @post It invokes nfc_mifare_decrement_completed_cb() when it has completed to decrement.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_mifare_increment()
  * @see nfc_mifare_write_block()
@@ -1933,6 +2278,9 @@ int nfc_mifare_decrement(nfc_tag_h tag, int block_index, int value, nfc_mifare_d
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Copy from the temporary block to the specified block.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE classic
  *
  * @param [in] tag The handle to NFC tag
@@ -1942,12 +2290,17 @@ int nfc_mifare_decrement(nfc_tag_h tag, int block_index, int value, nfc_mifare_d
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ *
+ * @post It invokes nfc_mifare_transfer_completed_cb() when it has completed to transfer.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_mifare_restore()
 */
@@ -1956,6 +2309,9 @@ int nfc_mifare_transfer(nfc_tag_h tag, int block_index, nfc_mifare_transfer_comp
 /**
  * @ingroup CAPI_NETWORK_NFC_TAG_MIFARE_MODULE
  * @brief Copy from a value block to the temporary block.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @remarks This function is only available for MIFARE classic
  *
  * @param [in] tag The handle to NFC tag
@@ -1965,20 +2321,25 @@ int nfc_mifare_transfer(nfc_tag_h tag, int block_index, nfc_mifare_transfer_comp
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
- * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_TIMED_OUT Timeout is reached while communicating with tag
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ *
+ * @post It invokes nfc_mifare_restore_completed_cb() when it has completed to restore.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_mifare_transfer()
 */
 int nfc_mifare_restore(nfc_tag_h tag, int block_index, nfc_mifare_restore_completed_cb callback, void *user_data);
 
-
 /**
  * @brief Registers a callback function for receiving data from NFC peer-to-peer target.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
  * @param [in] target The handle to peer target
@@ -1987,116 +2348,310 @@ int nfc_mifare_restore(nfc_tag_h tag, int block_index, nfc_mifare_restore_comple
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
+ * @see nfc_p2p_set_data_received_cb()
  * @see nfc_p2p_unset_data_received_cb()
- * @see nfc_p2p_data_recived_cb()
  * @see nfc_p2p_target_discovered_cb()
  */
-int nfc_p2p_set_data_received_cb(nfc_p2p_target_h target, nfc_p2p_data_recived_cb callback, void *user_data);
+int nfc_p2p_set_data_received_cb(nfc_p2p_target_h target, nfc_p2p_data_received_cb callback, void *user_data);
 
 /**
  * @brief Unregisters the callback function.
+ * @since_tizen 2.3
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
  * @param [in] target The handle to peer target
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  *
  * @see nfc_p2p_set_data_received_cb()
- * @see nfc_p2p_data_recived_cb()
+ * @see nfc_p2p_unset_data_received_cb()
  * @see nfc_p2p_target_discovered_cb()
  */
 int nfc_p2p_unset_data_received_cb(nfc_p2p_target_h target);
 
 /**
  * @brief Sends data to NFC peer-to-peer target
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
- * @param [in] tag The handle to NFC tag
+ * @param [in] target The handle to peer target
  * @param [in] message The message to send
  * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
  * @param [in] user_data The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ *
+ * @post It invokes nfc_p2p_send_completed_cb() when it has completed to p2p send.\n
+ * The Callback can receive error code when process is done.
  *
  * @see nfc_p2p_send_completed_cb()
  * @see nfc_p2p_target_discovered_cb()
 */
 int nfc_p2p_send(nfc_p2p_target_h target, nfc_ndef_message_h message, nfc_p2p_send_completed_cb callback, void *user_data);
 
-
 /**
- * @brief Sends data to NFC peer-to-peer target without permission check
+ * @brief Start peer-to-peer server using SNEP protocol
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
- * @param [in] tag The handle to NFC tag
- * @param [in] message The message to send
+ * @param [in] target The handle to peer target
+ * @param [in] san The name of service (service access name)
+ * @param [in] sap The number of service (service access point)
  * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
  * @param [in] user_data The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
  * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  *
- * @see nfc_p2p_send_completed_cb()
- * @see nfc_p2p_target_discovered_cb()
+ * @post It invokes nfc_snep_event_cb() when snep event is occured.\n
+ * The Callback can receive error code when process is done.
+ *
+ * @see nfc_snep_event_cb()
 */
-int nfc_p2p_send_no_permission(nfc_p2p_target_h target, nfc_ndef_message_h message, nfc_p2p_send_completed_cb callback, void *user_data);
-
-
+int nfc_snep_start_server(nfc_p2p_target_h target, const char *san, int sap, nfc_snep_event_cb callback, void *user_data);
 
 /**
- * @brief NFC Connection handover between NFC peer-to-peer target
+ * @brief Start peer-to-peer client using SNEP protocol
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
- * @param [in] target The handle to NFC device
- * @param [in] type Preferred Alternative Carrier
+ * @param [in] target The handle to peer target
+ * @param [in] san The name of service (service access name)
+ * @param [in] sap The number of service (service access point)
  * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
  * @param [in] user_data The user data to be passed to the callback function
  *
  * @return 0 on success, otherwise a negative error value.
  * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
  * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
  * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
- * @retval #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
  * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
  * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  *
- * @see nfc_p2p_connection_handover_completed_cb()
+ * @post It invokes nfc_snep_event_cb() when snep event is occured.\n
+ * The Callback can receive error code when process is done.
+ *
+ * @see nfc_snep_event_cb()
+ * @see nfc_snep_send_client_request()
+ * @see nfc_snep_stop_service()
 */
-int nfc_p2p_connection_handover(nfc_p2p_target_h target , nfc_ac_type_e type, nfc_p2p_connection_handover_completed_cb callback, void *user_data);
+int nfc_snep_start_client(nfc_p2p_target_h target, const char *san, int sap, nfc_snep_event_cb callback, void *user_data);
 
 /**
- * @brief Check available Alternative Carrier(AC) for NFC handover between NFC peer-to-peer target
+ * @brief Send request message to peer-to-peer client using SNEP protocol
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
  * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
  *
- * @param [in] carrier Alternative Carrier when to be checked whether supported or not
+ * @param [in] handle The handle to connected snep instance
+ * @param [in] type The request type of snep protocol
+ * @param [in] msg The ndef message which will be sent
+ * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
+ * @param [in] user_data The user data to be passed to the callback function
  *
- * @retval #true Supported
- * @retval #false Not Supported
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
  *
- * @see nfc_p2p_is_supported_ac_type()
+ * @post It invokes nfc_snep_event_cb() when snep event is occured.\n
+ * The Callback can receive error code when process is done.
+ *
+ * @see nfc_snep_event_cb()
 */
-bool nfc_p2p_is_supported_ac_type( nfc_ac_type_e carrior);
+int nfc_snep_send_client_request(nfc_p2p_snep_h handle, nfc_snep_type_e type, nfc_ndef_message_h msg, nfc_snep_event_cb callback, void *user_data);
 
+/**
+ * @brief Stop snep server or client
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
+ * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
+ *
+ * @param [in] target The handle to peer target
+ * @param [in] service The handle which will be stopped
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ *
+ * @see nfc_snep_event_cb()
+*/
+int nfc_snep_stop_service(nfc_p2p_target_h target, nfc_p2p_snep_h service);
+
+/**
+ * @brief Register peer-to-peer server using SNEP protocol
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
+ * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
+ *
+ * @param [in] san The name of service (service access name)
+ * @param [in] sap The number of service (service access point)
+ * @param [in] callback The callback function to invoke after this function has completed\n It can be null if notification is not required
+ * @param [in] user_data The user data to be passed to the callback function
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ *
+ * @post It invokes nfc_snep_event_cb() when snep event is occured.\n
+ * The Callback can receive error code when process is done.
+ *
+ * @see nfc_snep_event_cb()
+*/
+int nfc_snep_register_server(const char *san, int sap, nfc_snep_event_cb callback, void *user_data);
+
+/**
+ * @brief Unregister snep server or client
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc
+ * @ingroup CAPI_NETWORK_NFC_P2P_MODULE
+ *
+ * @param [in] san The name of service (service access name)
+ * @param [in] sap The number of service (service access point)
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not initialized NFC
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_INVALID_PARAMETER	Invalid parameter
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ *
+ * @see nfc_snep_event_cb()
+*/
+int nfc_snep_unregister_server(const char *san, int sap);
+
+/**
+ * @brief Enable card emulation mode.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
+ * @ingroup CAPI_NETWORK_NFC_SE_MODULE
+ * @remarks Security level can be determined by the manufacturer usage.\n
+ * If a security issue is occurred, contact with the manufacturer of the product.\n
+ * If you want to know about security level in detail, See the GSMA specification.\n
+ * (http://www.gsma.com/digitalcommerce/wp-content/uploads/2013/12/GSMA-NFC05-NFC-Handset-APIs-Requirement-Specification-version-4-1.pdf)
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not intialized NFC
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security Restricted by SMACK
+ * @retval #NFC_ERROR_SECURITY_RESTRICTED Security Restricted
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ *
+ * @see nfc_se_disable_card_emulation()
+ */
+int nfc_se_enable_card_emulation();
+
+/**
+ * @brief Disable card emulation mode.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
+ * @ingroup CAPI_NETWORK_NFC_SE_MODULE
+ * @remarks Security level can be determined by the manufacturer usage.\n
+ * If a security issue is occurred, contact with the manufacturer of the product.\n
+ * If you want to know about security level in detail, See the GSMA specification.\n
+ * (http://www.gsma.com/digitalcommerce/wp-content/uploads/2013/12/GSMA-NFC05-NFC-Handset-APIs-Requirement-Specification-version-4-1.pdf)
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not intialized NFC
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security Restricted by SMACK
+ * @retval #NFC_ERROR_SECURITY_RESTRICTED Security Restricted
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ *
+ * @see nfc_se_enable_card_emulation()
+ */
+int nfc_se_disable_card_emulation();
+
+/**
+ * @brief Get the current card emulation mode.
+ * @since_tizen 2.3
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/nfc.cardemulation
+ * @ingroup CAPI_NETWORK_NFC_SE_MODULE
+ *
+ * @param [out]  type   The current card emulation mode type
+ *
+ * @return 0 on success, otherwise a negative error value.
+ * @retval #NFC_ERROR_NONE Successful
+ * @retval #NFC_ERROR_NOT_SUPPORTED Not supported NFC
+ * @retval #NFC_ERROR_NOT_INITIALIZED Not intialized NFC
+ * @retval #NFC_ERROR_NOT_ACTIVATED NFC is not activated
+ * @retval #NFC_ERROR_OPERATION_FAILED Operation failed
+ * @retval #NFC_ERROR_PERMISSION_DENIED Security Restricted by SMACK
+ * @retval #NFC_ERROR_DEVICE_BUSY Device is too busy to handle your request
+ * @retval #NFC_ERROR_OUT_OF_MEMORY Out of memory
+ *
+ * @see nfc_se_enable_card_emulation()
+ * @see nfc_se_disable_card_emulation()
+ */
+int nfc_se_get_card_emulation_mode(nfc_se_card_emulation_mode_type_e *type);
 
 #ifdef __cplusplus
 }
 #endif
 
-
 #endif /* __NFC_H__ */
-
