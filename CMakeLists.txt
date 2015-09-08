@@ -13,18 +13,17 @@ SET(Services
         "system"
    )
 
-
 # project
 SET(project_prefix "capi")
 SET(prefix "/usr")
-SET(version "0.0.1")
+SET(version "0.0.3")
 SET(maintainer "Seungkeun Lee <sngn.lee@samsung.com>, Kangho Hur<kagho.hur@samsung.com>")
 SET(description "A NFC library in Tizen Native API")
 SET(service "network")
 SET(submodule "nfc")
 
 # for package file
-SET(dependents "dlog glib-2.0 nfc-common-lib nfc capi-base-common")
+SET(dependents "dlog glib-2.0 gio-2.0 nfc capi-base-common vconf ecore-x capi-system-info")
 SET(pc_dependents "capi-base-common")
 
 SET(fw_name "${project_prefix}-${service}-${submodule}")
@@ -56,7 +55,14 @@ ADD_DEFINITIONS("-DTIZEN_DEBUG")
 
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -Wl,--rpath=/usr/lib")
 
-aux_source_directory(src SOURCES)
+SET(SOURCES src/nfc_p2p.c
+			src/nfc_p2p_handover.c
+			src/nfc_tag.c
+			src/nfc_card_emulation.c
+			src/nfc_manager.c
+			src/nfc_common.c
+			src/nfc_ndef.c)
+
 ADD_LIBRARY(${fw_name} SHARED ${SOURCES})
 
 TARGET_LINK_LIBRARIES(${fw_name} ${${fw_name}_LDFLAGS})
@@ -72,7 +78,7 @@ INSTALL(TARGETS ${fw_name} DESTINATION lib)
 INSTALL(
         DIRECTORY ${INC_DIR}/ DESTINATION include/${service}
         FILES_MATCHING
-        PATTERN "*_private.h" EXCLUDE
+        PATTERN "*_common.h" EXCLUDE
         PATTERN "${INC_DIR}/*.h"
         )
 
