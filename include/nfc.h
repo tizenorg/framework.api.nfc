@@ -75,7 +75,7 @@ typedef enum {
 	NFC_RECORD_TNF_URI = 0x03,	/**< Absolute URI as defined in RFC 3986 [RFC 3986] */
 	NFC_RECORD_TNF_EXTERNAL_RTD = 0x04,	/**< NFC Forum external type [NFC RTD] */
 	NFC_RECORD_TNF_UNKNOWN = 0x05,	/**< Unknown\n The payload type is unknown */
-	NFC_RECORD_TNF_UNCHAGNED = 0x06,	/**< It means the payload is an intermediate or final chunk of a chunked NDEF Record */
+	NFC_RECORD_TNF_UNCHANGED = 0x06,	/**< It means the payload is an intermediate or final chunk of a chunked NDEF Record */
 } nfc_record_tnf_e;
 
 
@@ -342,7 +342,7 @@ extern const unsigned char NFC_RECORD_HANDOVER_SELECT_TYPE[2];
 /**
  * @brief Called after nfc_manager_set_activation() has completed.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
- * @internal
+ * @platform
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
  *
  * @param [in] error The result
@@ -790,7 +790,7 @@ void nfc_manager_unset_activation_changed_cb(void);
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel platform
  * @privilege %http://tizen.org/privilege/nfc.admin
- * @internal
+ * @platform
  * @ingroup CAPI_NETWORK_NFC_MANAGER_MODULE
 
  * @param [in] activation The NFC state for setting

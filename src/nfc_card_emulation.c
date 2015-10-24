@@ -174,6 +174,7 @@ int nfc_se_close_secure_element_internal(nfc_se_h handle)
 
 	CHECK_SUPPORTED(NFC_CE_FEATURE);
 	CHECK_INIT();
+	CHECK_INVALID(handle == NULL);
 
 	result = net_nfc_client_se_close_internal_secure_element_sync(
 		(net_nfc_target_handle_h)handle);

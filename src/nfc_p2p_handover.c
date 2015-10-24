@@ -232,14 +232,27 @@ int nfc_connection_handover_unset_event_cb(void)
 
 bool nfc_p2p_is_supported_ac_type(nfc_ac_type_e carrier)
 {
-	bool result = false;
+	bool _is_support_p2p = false;
+	bool _is_support_ac_type = false;
 
-	LOG_BEGIN();
+        LOG_BEGIN();
+
+        _is_support_p2p = nfc_common_is_supported(NFC_P2P_FEATURE);
+	if (!_is_support_p2p) {
+		set_last_result(NFC_ERROR_NOT_SUPPORTED);
+		return false;
+	}
 
 	if (carrier == NFC_AC_TYPE_BT)
-		result = true;
+		_is_support_ac_type = true;
 
-	return result;
+	if (_is_support_ac_type) {
+		set_last_result(NFC_ERROR_NONE);
+	} else {
+		set_last_result(NFC_ERROR_NOT_SUPPORTED);
+	}
+
+	return _is_support_ac_type;
 }
 
 int nfc_handover_message_import_from_ndef_message(nfc_handover_message_h *result, nfc_ndef_message_h msg)
